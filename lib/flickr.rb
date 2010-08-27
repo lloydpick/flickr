@@ -172,8 +172,12 @@ class Flickr
   end
   
   # Returns url for user to login in to Flickr to authenticate app for a user
-  def login_url(perms)
-    "http://flickr.com/services/auth/?api_key=#{@api_key}&perms=#{perms}&api_sig=#{signature_from('api_key'=>@api_key, 'perms' => perms)}"
+  def login_url(perms, extra = nil)
+    if extra
+      "http://flickr.com/services/auth/?api_key=#{@api_key}&perms=#{perms}&extra=#{extra}&api_sig=#{signature_from('api_key'=>@api_key, 'perms' => perms, 'extra' => extra)}"
+    else
+      "http://flickr.com/services/auth/?api_key=#{@api_key}&perms=#{perms}&api_sig=#{signature_from('api_key'=>@api_key, 'perms' => perms)}"
+    end
   end
     
   # Implements everything else.
