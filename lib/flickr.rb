@@ -420,6 +420,10 @@ class Flickr
       instance_variable_get("@#{param_name}")
     end
     
+    def date_taken
+      @date_taken.nil? ? getInfo("dates.taken") : @date_taken
+    end
+    
     def title
       @title.nil? ? getInfo("title") : @title
     end
@@ -608,6 +612,7 @@ class Flickr
         info = @client.photos_getInfo('photo_id'=>@id)['photo']
         @got_info = true
         info.each { |k,v| instance_variable_set("@#{k}", v)}
+        instance_variable_set("@date_taken", info['dates.taken'])
         @owner = User.new(info['owner']['nsid'], info['owner']['username'], nil, nil, @api_key)
         @tags = info['tags']['tag']
         @notes = info['notes']['note']#.collect { |note| Note.new(note.id) }
