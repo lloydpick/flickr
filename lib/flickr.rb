@@ -421,7 +421,7 @@ class Flickr
     end
     
     def date_taken
-      @date_taken.nil? ? getInfo("dates.taken") : @date_taken
+      @date_taken.nil? ? getInfo("date_taken") : @date_taken
     end
     
     def title
