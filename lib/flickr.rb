@@ -612,7 +612,7 @@ class Flickr
         info = @client.photos_getInfo('photo_id'=>@id)['photo']
         @got_info = true
         info.each { |k,v| instance_variable_set("@#{k}", v)}
-        instance_variable_set("@date_taken", info['dates.taken'])
+        instance_variable_set("@date_taken", info['dates']['taken'])
         @owner = User.new(info['owner']['nsid'], info['owner']['username'], nil, nil, @api_key)
         @tags = info['tags']['tag']
         @notes = info['notes']['note']#.collect { |note| Note.new(note.id) }
