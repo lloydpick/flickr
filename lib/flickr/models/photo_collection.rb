@@ -11,7 +11,7 @@ module Flickr
     # depending on the original object the photos are related to (e.g 'photos',
     # 'photoset', etc)
     def initialize(photos_api_response={}, api_key=nil)
-      photos = photos_api_response.["photos"]
+      photos = photos_api_response["photos"]
       [ "page", "pages", "perpage", "total" ].each { |i| instance_variable_set("@#{i}", photos[i])} 
       collection = photos['photo'] || []
       collection = [collection] if collection.is_a? Hash
