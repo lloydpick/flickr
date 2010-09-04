@@ -9,29 +9,19 @@ class TestFlickr < Test::Unit::TestCase
   # 
   # instantiation tests
   def test_should_instantiate_new_flickr_client
-    Flickr.any_instance.stubs(:login)
-    flickr = Flickr.new('some_api_key', 'email@test.com', 'some_password', 'some_shared_secret')
+    Flickr::Api.any_instance.stubs(:login)
+    flickr = Flickr::Api.new('some_api_key', 'some_shared_secret')
     
     assert_equal 'some_api_key', flickr.api_key
     assert_equal 'some_shared_secret', flickr.instance_variable_get(:@shared_secret)
   end
   
-  def test_should_try_to_login_using_old_api_if_email_and_password_passed
-    Flickr.any_instance.expects(:login).with('email@test.com', 'some_password') # checks email and password have been set
-    flickr = Flickr.new('some_api_key', 'email@test.com', 'some_password', 'some_shared_secret')
-  end
-  
   def test_should_instantiate_new_flickr_client_on_new_api
-    flickr = Flickr.new('api_key' => 'some_api_key', 'email' => 'email@test.com', 'password' => 'some_password', 'shared_secret' => 'some_shared_secret', 'foo' => 'bar')
+    flickr = Flickr::Api.new('api_key' => 'some_api_key', 'shared_secret' => 'some_shared_secret', 'foo' => 'bar')
     
     assert_equal 'some_api_key', flickr.api_key
     assert_equal 'some_shared_secret', flickr.instance_variable_get(:@shared_secret)
     assert_nil flickr.instance_variable_get(:@foo) # should ignore other params
-  end
-  
-  def test_should_not_try_to_login_using_old_api_when_instantiate_new_flickr_client_on_new_api
-    Flickr.any_instance.expects(:login).never # doesn't bother trying to login with new api -- it'll fail in any case
-    flickr = Flickr.new('api_key' => 'some_api_key', 'email' => 'email@test.com', 'password' => 'some_password', 'shared_secret' => 'some_shared_secret', 'foo' => 'bar')
   end
   
   # signature_from method tests
@@ -60,7 +50,7 @@ class TestFlickr < Test::Unit::TestCase
     f.stubs(:signature_from).returns("foo123bar456")
     
     url =  f.send(:request_url, 'someMethod', 'foo' => 'value which/needs&escaping')
-    [ "#{Flickr::HOST_URL}#{Flickr::API_PATH}", 
+    [ "#{Flickr::Api::HOST_URL}#{Flickr::Api::API_PATH}", 
       'api_key=some_api_key',
       'method=flickr.someMethod',
       'foo=value+which%2Fneeds%26escaping',
@@ -68,15 +58,6 @@ class TestFlickr < Test::Unit::TestCase
       'api_sig=foo123bar456'].each do |kv_pair|
       assert_match Regexp.new(Regexp.escape(kv_pair)), url
     end
-  end
-
-  def test_should_build_url_from_params_when_signature_returns_nil
-    flickr = flickr_client
-    flickr.stubs(:signature_from)
-    assert_equal "#{Flickr::HOST_URL}#{Flickr::API_PATH}/?api_key=some_api_key&method=flickr.someMethod", flickr.send(:request_url, 'someMethod')
-    assert_equal "#{Flickr::HOST_URL}#{Flickr::API_PATH}/?api_key=some_api_key&method=flickr.someMethod&foo=bar", flickr.send(:request_url, 'someMethod', 'foo' => 'bar', 'foobar' => nil)
-    assert_equal "#{Flickr::HOST_URL}#{Flickr::API_PATH}/?api_key=some_api_key&method=flickr.someMethod&foo=101", flickr.send(:request_url, 'someMethod', 'foo' => 101)
-    assert_equal "#{Flickr::HOST_URL}#{Flickr::API_PATH}/?api_key=some_api_key&method=flickr.someMethod&foo=value+which%2Fneeds%26escaping", flickr.send(:request_url, 'someMethod', 'foo' => 'value which/needs&escaping')
   end
   
   # method_missing tests
@@ -333,7 +314,7 @@ class TestFlickr < Test::Unit::TestCase
   end
   
   def test_should_instantiate_new_user_with_old_api
-    Flickr.any_instance.stubs(:login) # stub logging in
+    Flickr::Api.any_instance.stubs(:login) # stub logging in
     user = Flickr::User.new('foo123', 
                             'some_user', 
                             'email@test.com', # email irrelevant since Flickr API no longer supports authentication in this way
@@ -348,26 +329,26 @@ class TestFlickr < Test::Unit::TestCase
   
   def test_should_instantiate_new_client_when_instantiating_user_if_no_client_passed_in_params
     f = flickr_client
-    Flickr.expects(:new).returns(f)
+    Flickr::Api.expects(:new).returns(f)
     user = new_user( 'api_key' => 'an_api_key' )
     assert_equal f, user.client
   end
   
   def test_should_not_instantiate_new_client_when_instantiating_user_if_client_passed_in_params
     f = flickr_client
-    Flickr.expects(:new).never
+    Flickr::Api.expects(:new).never
     user = new_user( 'client' => f )
     assert_equal f, user.client
   end
   
   def test_should_not_instantiate_client_if_no_api_key_passed
-    Flickr.expects(:new).never
+    Flickr::Api.expects(:new).never
     user = new_user
     assert_nil user.client
   end
   
   def test_should_build_url_for_users_profile_page_using_user_id
-    Flickr.any_instance.expects(:http_get).never
+    Flickr::Api.any_instance.expects(:http_get).never
     assert_equal "http://www.flickr.com/people/foo123/", new_user.url
   end
   
@@ -473,7 +454,7 @@ class TestFlickr < Test::Unit::TestCase
   def test_should_get_users_public_photos
     client = mock
     client.expects(:photos_request).with('people.getPublicPhotos', {'user_id' => 'some_id'}).returns([new_photo, new_photo])
-    Flickr.expects(:new).at_least_once.returns(client)
+    Flickr::Api.expects(:new).at_least_once.returns(client)
 
     user = Flickr::User.new("some_id", "some_user", nil, nil, "some_api_key")
 
@@ -485,7 +466,7 @@ class TestFlickr < Test::Unit::TestCase
   def test_should_instantiate_favorite_photos_with_id_and_all_params_returned_by_query
     client = mock
     client.expects(:photos_request).with('favorites.getPublicList', {'user_id' => 'some_id'})
-    Flickr.expects(:new).at_least_once.returns(client)
+    Flickr::Api.expects(:new).at_least_once.returns(client)
     user = Flickr::User.new("some_id", "some_user", nil, nil, "some_api_key")
     user.favorites
   end
@@ -493,7 +474,7 @@ class TestFlickr < Test::Unit::TestCase
   def test_should_instantiate_contacts_photos_with_id_and_all_params_returned_by_query
     client = mock
     client.expects(:photos_request).with('photos.getContactsPublicPhotos', {'user_id' => 'some_id'})
-    Flickr.expects(:new).at_least_once.returns(client)
+    Flickr::Api.expects(:new).at_least_once.returns(client)
     user = Flickr::User.new('some_id', "some_user", nil, nil, "some_api_key")
     user.contactsPhotos
   end
@@ -521,7 +502,7 @@ class TestFlickr < Test::Unit::TestCase
   end
   
   def test_should_get_and_store_other_info_for_photo
-    Flickr.any_instance.stubs(:http_get).returns(photo_info_xml_response)
+    Flickr::Api.any_instance.stubs(:http_get).returns(photo_info_xml_response)
     photo = Flickr::Photo.new('foo123', 'some_api_key')
     
     assert_equal "1964 120 amazon estate", photo.title # calling #title method triggers getting of info
@@ -553,7 +534,7 @@ class TestFlickr < Test::Unit::TestCase
   end
   
   def test_should_get_and_other_info_for_photo_when_some_attributes_missing
-    Flickr.any_instance.stubs(:http_get).returns(sparse_photo_info_xml_response)
+    Flickr::Api.any_instance.stubs(:http_get).returns(sparse_photo_info_xml_response)
     photo = Flickr::Photo.new('foo123', 'some_api_key')
     
     assert_equal "1964 120 amazon estate", photo.title # calling #title method triggers getting of info
@@ -565,7 +546,7 @@ class TestFlickr < Test::Unit::TestCase
   end
   
   def test_should_not_get_info_more_than_once
-    Flickr.any_instance.expects(:http_get).returns(photo_info_xml_response) # expects only one call
+    Flickr::Api.any_instance.expects(:http_get).returns(photo_info_xml_response) # expects only one call
     photo = Flickr::Photo.new('foo123', 'some_api_key')
     
     photo.description # calling #description method triggers getting of info
@@ -585,7 +566,7 @@ class TestFlickr < Test::Unit::TestCase
   def test_should_get_info_on_owner_if_not_known
     photo = new_photo("owner" => nil)
     # stubbing private methods causes problems so we mock client method, which is what Photo#getInfo users to make API call
-    Flickr.any_instance.expects(:photos_getInfo).returns('photo' => { 'owner'=>{'nsid'=>'abc123', 'username'=>'SomeUserName', 'realname'=>"", 'location'=>''}, 
+    Flickr::Api.any_instance.expects(:photos_getInfo).returns('photo' => { 'owner'=>{'nsid'=>'abc123', 'username'=>'SomeUserName', 'realname'=>"", 'location'=>''}, 
                                                                       'notes' => {}, 'tags' => {}, 'urls' => {'url' => {'content' => 'http://prettyurl'}}}) 
 
     owner = photo.owner
@@ -597,7 +578,7 @@ class TestFlickr < Test::Unit::TestCase
   def test_should_instantiate_flickr_user_from_owner_id_if_we_have_it
     photo = Flickr::Photo.new
     photo.instance_variable_set(:@owner, "some_user_id")
-    Flickr.any_instance.expects(:photos_getInfo).never
+    Flickr::Api.any_instance.expects(:photos_getInfo).never
     
     user = photo.owner
     assert_kind_of Flickr::User, user
@@ -764,13 +745,13 @@ class TestFlickr < Test::Unit::TestCase
   
   # Photo#context tests
   def test_should_call_photos_getContext_to_get_context_photos
-    Flickr.any_instance.expects(:photos_getContext).returns({'prevphoto' => {}, 'nextphoto' => {}})
+    Flickr::Api.any_instance.expects(:photos_getContext).returns({'prevphoto' => {}, 'nextphoto' => {}})
     new_photo.context
   end
   
   def test_should_instantiate_context_photos_with_id_and_all_params_returned_by_query
     photo = new_photo
-    Flickr.any_instance.expects(:photos_getContext).returns({ 'prevphoto' => {'id' => '123', 'key_1' => 'value_1' }, 
+    Flickr::Api.any_instance.expects(:photos_getContext).returns({ 'prevphoto' => {'id' => '123', 'key_1' => 'value_1' }, 
                                                               'nextphoto' => {'id' => '456', 'key_2' => 'value_2'}})
     Flickr::Photo.expects(:new).with("123", "foo123", { "key_1" => "value_1"})
     Flickr::Photo.expects(:new).with("456", "foo123", { "key_2" => "value_2"})
@@ -780,7 +761,7 @@ class TestFlickr < Test::Unit::TestCase
   
   def test_should_not_instantiate_context_photos_with_id_of_0
     photo = new_photo
-    Flickr.any_instance.expects(:photos_getContext).returns({ 'prevphoto' => {'id' => '123', 'key_1' => 'value_1' }, 
+    Flickr::Api.any_instance.expects(:photos_getContext).returns({ 'prevphoto' => {'id' => '123', 'key_1' => 'value_1' }, 
                                                               'nextphoto' => {'id' => '0', 'key_2' => 'value_2'}})
     Flickr::Photo.expects(:new).with("123", anything, anything)
     Flickr::Photo.expects(:new).with("0", anything, anything).never
@@ -806,7 +787,7 @@ class TestFlickr < Test::Unit::TestCase
   # tests old api for instantiating groups
   def test_should_instantiate_group_from_id_and_api_key
     f = flickr_client
-    Flickr.expects(:new).with("some_api_key").returns(f)
+    Flickr::Api.expects(:new).with("some_api_key").returns(f)
     group = Flickr::Group.new("group1", "some_api_key")
     assert_equal f, group.client
   end
@@ -822,7 +803,7 @@ class TestFlickr < Test::Unit::TestCase
   
   def test_should_use_flickr_client_passed_in_params_hash_when_instantiating_group
     f = flickr_client
-    Flickr.expects(:new).never
+    Flickr::Api.expects(:new).never
     group = Flickr::Group.new("id" => "group1", "name" => "Group One", "client" => f)
     assert_equal f, group.client
   end
@@ -868,7 +849,7 @@ class TestFlickr < Test::Unit::TestCase
   end
   
   def test_should_get_photos_for_specified_photoset
-    Flickr.any_instance.expects(:request).with('photosets.getPhotos', {'photoset_id' => 'some_id'}).returns(dummy_photoset_photos_response)
+    Flickr::Api.any_instance.expects(:request).with('photosets.getPhotos', {'photoset_id' => 'some_id'}).returns(dummy_photoset_photos_response)
     photoset = Flickr::Photoset.new("some_id", "some_api_key")
     
     assert_kind_of Flickr::PhotoCollection, photos = photoset.photos
@@ -878,7 +859,7 @@ class TestFlickr < Test::Unit::TestCase
 
   def test_photoset_should_get_info_on_demand
     client = mock('client')
-    Flickr.expects(:new).with("some_api_key").returns(client)
+    Flickr::Api.expects(:new).with("some_api_key").returns(client)
     client.expects(:photosets_getInfo).never
     client.expects(:photos_request).never
 		Flickr::Photoset.new('foo123', "some_api_key")
@@ -886,7 +867,7 @@ class TestFlickr < Test::Unit::TestCase
 
   def test_photoset_should_get_info_just_once
     client = mock('client')
-    Flickr.expects(:new).with("some_api_key").returns(client)
+    Flickr::Api.expects(:new).with("some_api_key").returns(client)
     photoset_id, photos_url = 'foo123', 'http://example.com/photos/killer_bob/'
     response = {
       'primary' => 'primary',
@@ -906,7 +887,7 @@ class TestFlickr < Test::Unit::TestCase
   def test_photoset_should_get_photos_just_once
     photoset_id = 'foo123'
     client = mock('client')
-    Flickr.expects(:new).with("some_api_key").returns(client)
+    Flickr::Api.expects(:new).with("some_api_key").returns(client)
     photoset = Flickr::Photoset.new(photoset_id, "some_api_key")
     client.expects(:photosets_getInfo).never
     client.expects(:photos_request).with('photosets.getPhotos', 
@@ -919,7 +900,7 @@ class TestFlickr < Test::Unit::TestCase
 		photo = new_photo
     photoset_id = 'foo123'
     client = mock('client')
-    Flickr.expects(:new).with("some_api_key").returns(client)
+    Flickr::Api.expects(:new).with("some_api_key").returns(client)
     photoset = Flickr::Photoset.new(photoset_id, "some_api_key")
     client.expects(:photosets_getInfo).never
     client.expects(:photos_request).with('photosets.getPhotos', 
@@ -1013,11 +994,11 @@ class TestFlickr < Test::Unit::TestCase
   
   private
   def flickr_client
-    Flickr.new("some_api_key")
+    Flickr::Api.new("some_api_key")
   end
   
   def authenticated_flickr_client
-    f = Flickr.new('api_key' => 'some_api_key', 'shared_secret' => 'shared_secret_code')
+    f = Flickr::Api.new('api_key' => 'some_api_key', 'shared_secret' => 'shared_secret_code')
     f.instance_variable_set(:@auth_token, 'some_auth_token')
     f
   end

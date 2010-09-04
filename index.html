@@ -60,7 +60,7 @@
       <p><pre><code>require 'flickr'
 
 <span># basics</span>
-flickr = Flickr.new                           <span># create a flickr client</span>
+flickr = Flickr::Api.new                           <span># create a flickr client</span>
 flickr.login(email, password)                 <span># log in for actions that require it</span>
 flickr.users                                  <span># get all users currently online</span>
 flickr.photos                                 <span># get the 100 most recent public photos</span>

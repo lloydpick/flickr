@@ -1,10 +1,19 @@
 = flickr
 
-http://github.com/ctagg/flickr
+== CHANGE LOG:
+ 2010-09-04
+ --------------------------------------
+ - Made the framework more modular, earlier it had one file for everything, API, models etc.
+ - Fixed a bug when parsing photo_collections - they weren't parsed properly
+ - Updated tests (all pass)
+ - Tested with Rails 3.0
+ - Added Gemfile
+ 
+ This is a work in progress, it might not function properly!
 
 == DESCRIPTION:
 
-An insanely easy interface to the Flickr photo-sharing service. By Scott Raymond. (& updated May 08 by Chris Taggart, http://pushrod.wordpress.com)
+An insanely easy interface to the Flickr photo-sharing service. By Scott Raymond. (& updated May 08 by Chris Taggart, http://pushrod.wordpress.com, updated Sept 04 by Sebastian Johnsson, http://www.sebastianjohnsson.com)
 
 == FEATURES/PROBLEMS:
 
@@ -14,7 +23,7 @@ This has now been largely corrected, though not all current API calls are suppor
 == SYNOPSIS:
 
 require 'flickr'
-flickr = Flickr.new('some_flickr_api_key')    # create a flickr client (get an API key from http://www.flickr.com/services/api/)
+flickr = Flickr::Api.new('some_flickr_api_key')    # create a flickr client (get an API key from http://www.flickr.com/services/api/)
 user = flickr.users('sco@scottraymond.net')   # lookup a user
 user.name                                     # get the user's name
 user.location                                 # and location
@@ -40,13 +49,20 @@ flickr.photos.each do |p|                     # get the last 100 public photos..
   end
 end
 
+Searching:
+#See http://www.flickr.com/services/api/flickr.photos.search.html for possible parameters
+flickr = Flickr::Api.new('some_flickr_api_key') # create a flickr client (get an API key from http://www.flickr.com/services/api/)
+photos = flickr.photos({"text" => "Guitar", "sort" => "relevance"})
+photos.each {|photo| puts photo.title}
+
 == REQUIREMENTS:
 
 * Xmlsimple gem
 
 == INSTALL:
 
-* sudo gem install flickr
+Add this to your Gemfile:
+gem 'agiley-flickr', :git => 'git://github.com/agiley/flickr.git', :branch => 'master', :require => 'flickr'
 
 == LICENSE:
 
