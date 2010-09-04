@@ -12,10 +12,14 @@ module Flickr
     # 'photoset', etc)
     def initialize(photos_api_response={}, api_key=nil)
       photos = photos_api_response["photos"]
-      [ "page", "pages", "perpage", "total" ].each { |i| instance_variable_set("@#{i}", photos[i])} 
-      collection = photos['photo'] || []
-      collection = [collection] if collection.is_a? Hash
-      collection.each { |photo| self << Photo.new(photo.delete('id'), api_key, photo) }
+      photos = (photos) ? photos : photos_api_response["photoset"]
+      
+      if (photos)
+        [ "page", "pages", "perpage", "total" ].each { |i| instance_variable_set("@#{i}", photos[i])} 
+        collection = photos['photo'] || []
+        collection = [collection] if collection.is_a? Hash
+        collection.each { |photo| self << Photo.new(photo.delete('id'), api_key, photo) }
+      end
     end
   end
 end
