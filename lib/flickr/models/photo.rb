@@ -200,9 +200,9 @@ module Flickr
     end
 
     # Converts the Photo to a string by returning its title
-    def to_s
-      title
-    end
+    #def to_s
+    #  title
+    #end
 
     private
 
