@@ -37,7 +37,7 @@ module Flickr
     end
     
     def comments
-      @comments ||= @client.comments_for(:photoset, self.id)
+      @comments ||= @client.comments_for_photoset(self.id)
     end
 
   	def first_photo

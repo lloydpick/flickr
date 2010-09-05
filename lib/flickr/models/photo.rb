@@ -143,7 +143,7 @@ module Flickr
     end
     
     def comments
-      @comments ||= @client.comments_for(:photo, self.id)
+      @comments ||= @client.comments_for_photo(self.id)
     end
 
     def vertical?

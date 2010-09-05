@@ -67,11 +67,12 @@ module Flickr
     alias_method :search, :photos_search
     
     # Implements flickr.photos.comments.getList and flickr.photosets.comments.getList
-    def comments_for(type = :photo, identifier = nil)
-      type = type.to_sym
-      request_method = (type.eql?(:photo)) ? "photos.comments.getList" : "flickr.photosets.comments.getList"
-      params = (type.eql?(:photo)) ? {"photo_id" => identifier} : {"photoset_id" => identifier}
-      comments_request(request_method, params)
+    def comments_for_photo(id)
+      comments_request("photos.comments.getList", {"photo_id" => id})
+    end
+    
+    def comments_for_photoset(id)
+      comments_request("photosets.comments.getList", {"photoset_id" => id})
     end
 
     # Gets public photos with a given tag
