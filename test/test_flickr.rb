@@ -152,6 +152,24 @@ class TestFlickr < Test::Unit::TestCase
     assert_kind_of Flickr::Photo, photos.first
     assert_equal "foo123", photos.first.id
   end
+  
+  def test_should_return_collection_of_comments
+    f = flickr_client
+    f.expects(:request).returns(dummy_comments_response)
+    
+    comments = f.comments_request('some_method')
+    comment = comments.first
+    
+    assert_equal 1, comments.size
+    
+    assert_kind_of Flickr::Comment, comment
+    assert_equal "6065-109722179-72057594077818641", comment.id
+    assert_equal "35468159852@N01", comment.author.id
+    assert_equal "Rev Dan Catt", comment.author.username    
+    assert_equal "1141841470", comment.instance_variable_get(:@datecreate)
+    assert_equal "http://www.flickr.com/photos/straup/109722179/#comment72057594077818641", comment.permalink
+    assert_equal "Umm, I'm not sure, can I get back to you on that one?", comment.content
+  end
 
   def test_should_work_with_single_result
     f = flickr_client
@@ -315,15 +333,8 @@ class TestFlickr < Test::Unit::TestCase
   
   def test_should_instantiate_new_user_with_old_api
     Flickr::Api.any_instance.stubs(:login) # stub logging in
-    user = Flickr::User.new('foo123', 
-                            'some_user', 
-                            'email@test.com', # email irrelevant since Flickr API no longer supports authentication in this way
-                            'password', # password irrelevant since Flickr API no longer supports authentication in this way
-                            'bar456')
+    user = Flickr::User.new('foo123', 'bar456')
     assert_equal 'foo123', user.id
-    assert_equal 'some_user', user.username
-    assert_equal 'email@test.com', user.instance_variable_get(:@email)
-    assert_equal 'password', user.instance_variable_get(:@password)
     assert_equal 'bar456', user.client.api_key
   end
   
@@ -456,7 +467,7 @@ class TestFlickr < Test::Unit::TestCase
     client.expects(:photos_request).with('people.getPublicPhotos', {'user_id' => 'some_id'}).returns([new_photo, new_photo])
     Flickr::Api.expects(:new).at_least_once.returns(client)
 
-    user = Flickr::User.new("some_id", "some_user", nil, nil, "some_api_key")
+    user = Flickr::User.new("some_id", "some_api_key")
 
     photos = user.photos
     assert_equal 2, photos.size
@@ -467,7 +478,7 @@ class TestFlickr < Test::Unit::TestCase
     client = mock
     client.expects(:photos_request).with('favorites.getPublicList', {'user_id' => 'some_id'})
     Flickr::Api.expects(:new).at_least_once.returns(client)
-    user = Flickr::User.new("some_id", "some_user", nil, nil, "some_api_key")
+    user = Flickr::User.new("some_id", "some_api_key")
     user.favorites
   end
   
@@ -475,7 +486,7 @@ class TestFlickr < Test::Unit::TestCase
     client = mock
     client.expects(:photos_request).with('photos.getContactsPublicPhotos', {'user_id' => 'some_id'})
     Flickr::Api.expects(:new).at_least_once.returns(client)
-    user = Flickr::User.new('some_id', "some_user", nil, nil, "some_api_key")
+    user = Flickr::User.new('some_id', "some_api_key")
     user.contactsPhotos
   end
   
@@ -1017,7 +1028,7 @@ class TestFlickr < Test::Unit::TestCase
                       { "farm" => "1",
                         "server" => "2",
                         "secret" => "1e92283336",
-                        "owner" => Flickr::User.new("abc123", "some_user", nil, nil, "some_api_key") }.merge(options))
+                        "owner" => Flickr::User.new("abc123", "some_api_key") }.merge(options))
   end
   
   def dummy_photo_collection
@@ -1048,6 +1059,20 @@ class TestFlickr < Test::Unit::TestCase
 
   def dummy_zero_photo_response
     { "photos" => { "total" => 0 } }
+  end
+  
+  def dummy_comments_response
+    { "comments" => 
+      { "comment" => 
+        [{ "id" => "6065-109722179-72057594077818641", 
+           "author" => "35468159852@N01", 
+           "authorname" => "Rev Dan Catt",
+           "datecreate" => "1141841470",
+           "permalink"  => "http://www.flickr.com/photos/straup/109722179/#comment72057594077818641",
+           "content"    => "Umm, I'm not sure, can I get back to you on that one?"
+          },
+        ],
+        } }
   end
   
   def dummy_user_response
@@ -1162,6 +1187,34 @@ class TestFlickr < Test::Unit::TestCase
       		<url type="photopage">http://www.flickr.com/photos/rootes_arrow/2296968304/</url>
       	</urls>
       </photo>
+    </rsp>
+    EOF
+  end
+  
+  def photo_comment_xml_response
+    <<-EOF
+    <?xml version="1.0" encoding="utf-8" ?>
+    <rsp stat="ok">
+      <comments photo_id="109722179">
+        <comment id="6065-109722179-72057594077818641"
+         author="35468159852@N01" authorname="Rev Dan Catt" datecreate="1141841470"
+         permalink="http://www.flickr.com/photos/straup/109722179/#comment72057594077818641"
+         >Umm, I'm not sure, can I get back to you on that one?</comment>
+      </comments>
+    </rsp>
+    EOF
+  end
+  
+  def photoset_comment_xml_response
+    <<-EOF
+    <?xml version="1.0" encoding="utf-8" ?>
+    <rsp stat="ok">
+      <comments photoset_id="109722179">
+        <comment id="6065-109722179-72057594077818641"
+          author="35468159852@N01" authorname="Rev Dan Catt" date_create="1141841470"
+          permalink="http://www.flickr.com/photos/straup/109722179/#comment72057594077818641"
+          >Umm, I'm not sure, can I get back to you on that one?</comment>
+      </comments>
     </rsp>
     EOF
   end

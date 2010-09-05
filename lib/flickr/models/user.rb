@@ -28,35 +28,36 @@ module Flickr
     # (e.g. 'client' => some_existing_flickr_client_object), and this is
     # what happends when users are initlialized as the result of a method 
     # called on the flickr client (e.g. flickr.users)
-    def initialize(id_or_params_hash=nil, username=nil, email=nil, password=nil, api_key=nil)
+    def initialize(id_or_params_hash=nil, api_key=nil)
       if id_or_params_hash.is_a?(Hash)
         id_or_params_hash.each { |k,v| self.instance_variable_set("@#{k}", v) } # convert extra_params into instance variables
       else
         @id = id_or_params_hash
-        @username = username
-        @email = email
-        @password = password
         @api_key = api_key
       end
       @client ||= Flickr::Api.new('api_key' => @api_key, 'shared_secret' => @shared_secret, 'auth_token' => @auth_token) if @api_key
-      @client.login(@email, @password) if @email and @password # this is now irrelevant as Flickr API no longer supports authentication this way
     end
 
     def username
       @username.nil? ? getInfo.username : @username
     end
+    
     def name
       @name.nil? ? getInfo.name : @name
     end
+    
     def location
       @location.nil? ? getInfo.location : @location
     end
+    
     def count
       @count.nil? ? getInfo.count : @count
     end
+    
     def firstdate
       @firstdate.nil? ? getInfo.firstdate : @firstdate
     end
+    
     def firstdatetaken
       @firstdatetaken.nil? ? getInfo.firstdatetaken : @firstdatetaken
     end
@@ -100,7 +101,7 @@ module Flickr
 
     # Implements flickr.contacts.getPublicList and flickr.contacts.getList
     def contacts
-      @client.contacts_getPublicList('user_id'=>@id)['contacts']['contact'].collect { |contact| User.new(contact['nsid'], contact['username'], nil, nil, @api_key) }
+      @client.contacts_getPublicList('user_id'=>@id)['contacts']['contact'].collect { |contact| User.new({'id' => contact['nsid'], 'username' => contact['username'], 'api_key' => @api_key}) }
       #or
     end
 

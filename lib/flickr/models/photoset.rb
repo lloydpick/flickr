@@ -35,6 +35,10 @@ module Flickr
   	def photos
   		@photos ||= getPhotos
     end
+    
+    def comments
+      @comments ||= @client.comments_for(:photoset, self.id)
+    end
 
   	def first_photo
   		@first_photo ||= getFirstPhoto
@@ -44,7 +48,7 @@ module Flickr
     def getInfo
       unless @info
         @info = @client.photosets_getInfo('photoset_id'=>@id)['photoset']
-        @owner = User.new(@info['owner'], nil, nil, nil, @api_key)
+        @owner = User.new(@info['owner'], @api_key)
         @primary = @info['primary']
         @title = @info['title']
         @description = @info['description']

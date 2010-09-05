@@ -47,7 +47,7 @@ module Flickr
     # Implements flickr.urls.lookupGroup and flickr.urls.lookupUser
     def find_by_url(url)
       response = urls_lookupUser('url'=>url) rescue urls_lookupGroup('url'=>url) rescue nil
-      (response['user']) ? User.new(response['user']['id'], nil, nil, nil, @api_key) : Group.new(response['group']['id'], @api_key) unless response.nil?
+      (response['user']) ? User.new(response['user']['id'], @api_key) : Group.new(response['group']['id'], @api_key) unless response.nil?
     end
 
     # Implements flickr.photos.getRecent and flickr.photos.search
@@ -65,6 +65,14 @@ module Flickr
       photos_request('photos.search', params)
     end
     alias_method :search, :photos_search
+    
+    # Implements flickr.photos.comments.getList and flickr.photosets.comments.getList
+    def comments_for(type = :photo, identifier = nil)
+      type = type.to_sym
+      request_method = (type.eql?(:photo)) ? "photos.comments.getList" : "flickr.photosets.comments.getList"
+      params = (type.eql?(:photo)) ? {"photo_id" => identifier} : {"photoset_id" => identifier}
+      comments_request(request_method, params)
+    end
 
     # Gets public photos with a given tag
     def tag(tag)
@@ -136,6 +144,11 @@ module Flickr
     def photos_request(method, params={})
       photos = request(method, params)
       PhotoCollection.new(photos, @api_key)
+    end
+    
+    def comments_request(method, params={})
+      comments = request(method, params)
+      return CommentCollection.new(comments, @api_key)
     end
 
     # Builds url for Flickr API REST request from given the flickr method name 

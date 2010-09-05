@@ -43,6 +43,8 @@ require File.expand_path(File.dirname(__FILE__) + '/flickr/models/photo')
 require File.expand_path(File.dirname(__FILE__) + '/flickr/models/photo_collection')
 require File.expand_path(File.dirname(__FILE__) + '/flickr/models/photoset')
 require File.expand_path(File.dirname(__FILE__) + '/flickr/models/user')
+require File.expand_path(File.dirname(__FILE__) + '/flickr/models/comment')
+require File.expand_path(File.dirname(__FILE__) + '/flickr/models/comment_collection')
 
 module Flickr
   #The API implementation is found in /flickr/api

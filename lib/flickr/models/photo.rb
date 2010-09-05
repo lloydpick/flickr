@@ -37,7 +37,7 @@ module Flickr
       when Flickr::User
         @owner
       when String
-        @owner = Flickr::User.new(@owner, nil, nil, nil, @api_key)
+        @owner = Flickr::User.new(@owner, @api_key)
       else
         getInfo("owner")
       end
@@ -141,6 +141,10 @@ module Flickr
       sizes = sizes.find{|asize| asize['label']==size} if size
       return sizes
     end
+    
+    def comments
+      @comments ||= @client.comments_for(:photo, self.id)
+    end
 
     def vertical?
       @medium_size ||= self.sizes('Medium')
@@ -213,7 +217,7 @@ module Flickr
         @got_info = true
         info.each { |k,v| instance_variable_set("@#{k}", v)}
         instance_variable_set("@date_taken", info['dates']['taken']) if (info['dates'] && info['dates']['taken'])
-        @owner = User.new(info['owner']['nsid'], info['owner']['username'], nil, nil, @api_key)
+        @owner = User.new({'id' => info['owner']['nsid'], 'username' => info['owner']['username'], 'api_key' => @api_key})
         @tags = info['tags']['tag']
         @notes = info['notes']['note']#.collect { |note| Note.new(note.id) }
         @url = info['urls']['url']['content'] # assumes only one url
