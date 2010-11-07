@@ -32,5 +32,13 @@ module Flickr
       self
     end
 
+    # Implements flickr.groups.pools.getPhotos. Options hash allows you to add
+    # extra restrictions as per flickr.groups.pools.getPhotos docs, e.g.
+    # group.photos('per_page' => '25', 'extras' => 'date_taken')
+    def photos(options={})
+      @client.photos_request('groups.pools.getPhotos', {'group_id' => @id}.merge(options))
+      # what about non-public photos?
+    end
+
   end
 end

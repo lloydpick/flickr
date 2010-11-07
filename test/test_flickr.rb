@@ -826,6 +826,15 @@ class TestFlickr < Test::Unit::TestCase
       assert_equal "foo_#{m}", g.send(m)
     end
   end
+
+  def test_should_get_photos_for_specified_group
+    Flickr::Api.any_instance.expects(:request).with('groups.pools.getPhotos', {'group_id' => 'some_id'}).returns(dummy_photoset_photos_response)
+    group = Flickr::Group.new("some_id", "some_api_key")
+
+    assert_kind_of Flickr::PhotoCollection, photos = group.photos
+    assert_equal 2, photos.size
+    assert_kind_of Flickr::Photo, photos.first
+  end
   
   # def test_should_initialize_photo_from_id
   #   photo = Flickr::Photo.new("foo123")
